@@ -1,0 +1,48 @@
+AttributeError: 'numpy.ndarray' object has no attribute 'iloc'
+Traceback:
+
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 121, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 593, in code_to_exec
+    exec(code, module.__dict__)
+File "/home/runner/workspace/app.py", line 1004, in <module>
+    patterns = get_detected_patterns(hist)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/utils/advanced_patterns.py", line 705, in get_detected_patterns
+    hs_patterns = detect_head_and_shoulders(df)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/utils/advanced_patterns.py", line 67, in detect_head_and_shoulders
+    swing_highs, swing_lows = identify_swing_highs_lows(df, window, price_col)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/utils/advanced_patterns.py", line 40, in identify_swing_highs_lows
+    price_data['is_max'] = price_data[price_col].rolling(window=window, center=True).apply(
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 2049, in apply
+    return super().apply(
+           ^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 1508, in apply
+    return self._apply(
+           ^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 619, in _apply
+    return self._apply_columnwise(homogeneous_func, name, numeric_only)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 472, in _apply_columnwise
+    return self._apply_series(homogeneous_func, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 456, in _apply_series
+    result = homogeneous_func(values)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 614, in homogeneous_func
+    result = calc(values)
+             ^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 611, in calc
+    return func(x, start, end, min_periods, *numba_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pandas/core/window/rolling.py", line 1535, in apply_func
+    return window_func(values, begin, end, min_periods)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "aggregations.pyx", line 1420, in pandas._libs.window.aggregations.roll_apply
+File "/home/runner/workspace/utils/advanced_patterns.py", line 41, in <lambda>
+    lambda x: x.iloc[window//2] == max(x), raw=True)
+              ^^^^^^

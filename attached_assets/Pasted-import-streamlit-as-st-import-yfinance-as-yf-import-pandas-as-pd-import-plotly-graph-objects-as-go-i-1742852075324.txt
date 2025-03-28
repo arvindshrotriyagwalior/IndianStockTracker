@@ -1,0 +1,101 @@
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import plotly.graph_objects as go
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+
+# Set up Streamlit app
+st.title("Indian Stock Market Analysis & AI Recommendations")
+st.sidebar.header("Stock Selection")
+
+# User inputs
+symbol = st.sidebar.text_input("Enter NSE/BSE stock symbol (e.g., RELIANCE.NS, TCS.BO)")
+timeframe = st.sidebar.selectbox("Select timeframe", ["1d", "5d", "1wk", "1mo", "3mo"])
+
+if symbol:
+    # Fetch data
+    stock = yf.Ticker(symbol)
+    hist = stock.history(period=timeframe)
+    
+    if not hist.empty:
+        # Candlestick Chart
+        fig = go.Figure()
+        fig.add_trace(go.Candlestick(
+            x=hist.index,
+            open=hist['Open'],
+            high=hist['High'],
+            low=hist['Low'],
+            close=hist['Close'],
+            name="Candlestick"
+        ))
+        fig.update_layout(title=f"Stock Price Chart: {symbol}", xaxis_title="Date", yaxis_title="Price (₹)")
+        st.plotly_chart(fig)
+        
+        # Display fundamental metrics
+        st.subheader("Fundamental Analysis")
+        info = stock.info
+        metrics = {"Previous Close": info.get("previousClose"), "PE Ratio": info.get("trailingPE"), "Market Cap": info.get("marketCap")}
+        st.write(metrics)
+        
+        # Technical Analysis: Indicators
+        hist['SMA_20'] = hist['Close'].rolling(window=20).mean()
+        hist['EMA_20'] = hist['Close'].ewm(span=20, adjust=False).mean()
+        hist['MACD'] = hist['Close'].ewm(span=12, adjust=False).mean() - hist['Close'].ewm(span=26, adjust=False).mean()
+        hist['Signal_Line'] = hist['MACD'].ewm(span=9, adjust=False).mean()
+        hist['Upper_BB'] = hist['Close'].rolling(window=20).mean() + (hist['Close'].rolling(window=20).std() * 2)
+        hist['Lower_BB'] = hist['Close'].rolling(window=20).mean() - (hist['Close'].rolling(window=20).std() * 2)
+        
+        st.line_chart(hist[['Close', 'SMA_20', 'EMA_20']])
+        st.line_chart(hist[['MACD', 'Signal_Line']])
+        st.line_chart(hist[['Close', 'Upper_BB', 'Lower_BB']])
+        
+        # Stock Performance Comparison
+        st.subheader("Stock Performance Comparison")
+        period = st.radio("Select Comparison Period", ["1 week", "1 day"])
+        comparison_period = "7d" if period == "1 week" else "1d"
+        hist_comparison = stock.history(period=comparison_period)
+        if not hist_comparison.empty:
+            st.line_chart(hist_comparison['Close'])
+        else:
+            st.warning("No data available for comparison.")
+        
+        # Intraday Trading Recommendations
+        st.subheader("Intraday Trading Recommendations")
+        if timeframe == "1d":
+            hist['Momentum'] = hist['Close'].diff()
+            hist['RSI'] = 100 - (100 / (1 + hist['Momentum'].clip(lower=0).mean() / hist['Momentum'].clip(upper=0).abs().mean()))
+            st.line_chart(hist[['Close', 'RSI']])
+            
+            if hist['RSI'].iloc[-1] > 70:
+                st.error("Overbought - Consider Selling")
+            elif hist['RSI'].iloc[-1] < 30:
+                st.success("Oversold - Consider Buying")
+            else:
+                st.info("Neutral Market Condition")
+        
+        # AI-based Buy/Sell Recommendation
+        st.subheader("AI-Powered Buy/Sell Recommendation")
+        hist['Returns'] = hist['Close'].pct_change()
+        hist['Volatility'] = hist['Returns'].rolling(window=5).std()
+        hist.dropna(inplace=True)
+        
+        X = hist[['Close', 'SMA_20', 'Volatility']]
+        y = (hist['Returns'] > 0).astype(int)  # 1 if stock went up, 0 otherwise
+        
+        if len(X) > 10:
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model.fit(X_scaled[:-1], y[:-1])
+            prediction = model.predict([X_scaled[-1]])
+            
+            if prediction[0] == 1:
+                st.success("AI Recommendation: BUY")
+            else:
+                st.error("AI Recommendation: SELL")
+        else:
+            st.warning("Insufficient data for AI recommendation.")
+    else:
+        st.warning("No data available for this symbol.")
